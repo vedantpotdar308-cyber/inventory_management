@@ -1,107 +1,61 @@
-# 📦 Inventory Management System
+# 📦 Simple Inventory Management System
 
-A full-stack Inventory Management application built with a **MySQL** backend, **Node.js (Express)** REST API, and a clean, responsive **HTML, CSS, and Vanilla JavaScript** frontend.
-
----
-
-## 🌟 Key Features
-
-1. **Dashboard Overview**
-   - KPI metrics: Total unique products, total stock quantity, total inventory asset valuation (in ₹ INR), low stock count, out-of-stock count.
-   - Low stock attention list with direct restock button.
-   - Recent movements feed (real-time stream of arrivals and dispatches).
-
-2. **Product Catalog Management (CRUD)**
-   - **Add Products**: SKU code, name, category, unit price, initial quantity, minimum stock alert threshold, description.
-   - **Edit Products**: Update product details and thresholds.
-   - **Delete Products**: Secure deletion with confirmation modal and cascade audit handling.
-
-3. **Stock In / Stock Out Transactions**
-   - **Stock IN (Restocking / Arrival)**: Adds stock units, updates previous and new balance, logs timestamp and notes/PO number.
-   - **Stock OUT (Sales / Dispatch)**: Deducts stock units with atomic database transaction verification (prevents negative inventory).
-   - Complete transaction audit trail log.
-
-4. **Search, Filter & Export**
-   - Live instant search across SKU, product name, and description.
-   - Dynamic category filter dropdown.
-   - Stock status filter (All, Normal, Low Stock, Out of Stock).
-   - **CSV Export**: One-click download of full product inventory and transaction audit logs.
-
-5. **Modern Native UI & Accessibility**
-   - Built with native HTML5 `<dialog>` elements and modern `light-dismiss` (click outside or press `Esc` to close).
-   - Responsive layout designed for desktop and mobile devices.
-   - Toast notification feedback system for every action.
+A simple inventory management project with:
+- **Frontend**: Plain HTML, CSS, and JavaScript.
+- **Backend**: MySQL database with Node.js (Express) server.
 
 ---
 
-## 🚀 Quick Start Guide
+## 🌟 What This Project Does
+
+1. **Dashboard Details**:
+   - **Total Products**: How many different products are in stock.
+   - **Total Stock Quantity**: Sum of all units across all products.
+   - **Total Stock Value**: Total valuation (`Price × Quantity` for all products).
+
+2. **Core Features**:
+   - **Adding Products**: Add a product with Name, Category, Unit Price, and Quantity.
+   - **Editing Products**: Update any product's details and stock.
+   - **Removing Products**: Delete a product with confirmation.
+   - **Changing Quantity**: Quick `+` and `−` buttons directly in each row to change stock on the fly.
+   - **Quick Search**: Filter products by name or category instantly.
+
+---
+
+## 🚀 How to Run
 
 ### Step 1: Start MySQL in XAMPP
 1. Open the **XAMPP Control Panel**.
-2. Click **Start** next to **MySQL** (and Apache if you wish).
-3. Ensure MySQL is running on port **3306** (the default).
+2. Click **Start** next to **MySQL** (port 3306).
 
-> **Note**: The application automatically connects, creates the `inventory_db` database, creates all necessary tables (`products` and `transactions`), and seeds initial sample products if empty!
+> The project automatically creates the `inventory_db` database and `products` table on start, and inserts starter products if empty!
 
-### Step 2: Configure Environment (Optional)
-The project is already pre-configured for standard local MySQL / XAMPP in `.env`:
-```ini
-PORT=3000
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=inventory_db
-```
-If your MySQL has a password, enter it in `.env`.
-
-### Step 3: Run the Application
-Open PowerShell or your terminal in this directory:
+### Step 2: Start the Project
+Open terminal / command prompt in this directory:
 ```bash
 cd d:\download\inventory-management-system
 npm start
 ```
 
-### Step 4: Open in Your Browser
-Open your browser and visit:
-👉 **[http://localhost:3000](http://localhost:3000)**
+### Step 3: Open in Browser
+Visit: **[http://localhost:3000](http://localhost:3000)**
 
 ---
 
-## 📁 Project Structure
+## 📁 File Structure
 
 ```text
 inventory-management-system/
-├── .env                  # MySQL connection settings
-├── .env.example          # Environment sample template
-├── package.json          # Dependencies & scripts
-├── server.js             # Express REST API & static file server
+├── server.js             # Simple backend server (connects to MySQL & serves frontend)
 ├── database/
-│   ├── db.js             # MySQL connection pool & automatic table migration
-│   └── schema.sql        # Standalone SQL schema and sample seed records
-├── public/               # Frontend (HTML, CSS, JavaScript)
-│   ├── index.html        # Single-page UI with Dashboard, Catalog & History
+│   ├── db.js             # MySQL connection & table initialization
+│   └── schema.sql        # MySQL database schema & sample data
+├── public/               # Frontend
+│   ├── index.html        # Clean HTML (Dashboard + Products Table + Modals)
 │   ├── css/
-│   │   └── style.css     # Modern styling, responsive cards, dialogs, badges
+│   │   └── style.css     # Simple, clean, minimal styling
 │   └── js/
-│       └── app.js        # Controller: CRUD, Stock In/Out, Search & CSV Exports
-└── README.md             # Documentation & Setup instructions
+│       └── app.js        # JavaScript (fetch API, CRUD, quantity change)
+├── .env                  # MySQL configuration (default XAMPP root, no password)
+└── package.json          # Dependencies (express, mysql2, dotenv, cors)
 ```
-
----
-
-## 🔌 REST API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/status` | Database connection status |
-| `GET` | `/api/dashboard/stats` | Summary counts, valuation & recent movements |
-| `GET` | `/api/products` | Filterable products catalog (`search`, `category`, `status`) |
-| `POST` | `/api/products` | Create a new product |
-| `PUT` | `/api/products/:id` | Update product details |
-| `DELETE` | `/api/products/:id` | Delete product |
-| `POST` | `/api/transactions` | Perform Stock IN or Stock OUT movement |
-| `GET` | `/api/transactions` | Transaction history audit log |
-| `GET` | `/api/categories` | Distinct categories list |
-| `GET` | `/api/export/products` | Download CSV of products |
-| `GET` | `/api/export/transactions`| Download CSV of transactions |
