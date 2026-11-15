@@ -1,7 +1,6 @@
 /**
  * Simple Inventory Management - Frontend Controller
- * Plain HTML, CSS, JavaScript (ES6+)
- * Compatible with Node.js backend AND PHP/XAMPP backend
+ * Pure HTML, CSS, JavaScript (Node.js Backend)
  */
 
 let products = [];
@@ -40,23 +39,6 @@ const el = {
   toast: document.getElementById('toastMessage'),
 };
 
-// Auto-detect backend (Node.js or PHP in XAMPP)
-const isPhpMode = window.location.port !== '3000' || window.location.pathname.includes('/inventory');
-
-function getApiUrl(action, id = null) {
-  if (isPhpMode) {
-    if (action === 'status') return 'api.php?action=status';
-    if (action === 'quantity') return `api.php?action=quantity&id=${id}`;
-    if (action === 'edit' || action === 'delete') return `api.php?id=${id}`;
-    return 'api.php';
-  } else {
-    if (action === 'status') return '/api/status';
-    if (action === 'quantity') return `/api/products/${id}/quantity`;
-    if (action === 'edit' || action === 'delete') return `/api/products/${id}`;
-    return '/api/products';
-  }
-}
-
 // Format currency in Indian Rupees (₹)
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-IN', {
@@ -75,11 +57,11 @@ function showToast(text) {
 }
 
 // -------------------------------------------------------------
-// Database Status
+// Database & Server Status
 // -------------------------------------------------------------
 async function checkStatus() {
   try {
-    const res = await fetch(getApiUrl('status'));
+    const res = await fetch('/api/status');
     const data = await res.json();
     if (data.online) {
       el.statusDot.className = 'status-dot online';
@@ -89,12 +71,14 @@ async function checkStatus() {
     } else {
       el.statusDot.className = 'status-dot offline';
       el.statusLabel.textContent = 'MySQL Offline';
+      el.warningBanner.innerHTML = `⚠️ <strong>MySQL is not connected!</strong> Please verify MySQL is running and check your credentials in <code>.env</code>.`;
       el.warningBanner.style.display = 'block';
       return false;
     }
   } catch (err) {
     el.statusDot.className = 'status-dot offline';
     el.statusLabel.textContent = 'Server Offline';
+    el.warningBanner.innerHTML = `⚠️ <strong>Node.js Server is not running!</strong> In your terminal run: <code>npm start</code>, then visit <code>http://localhost:3000</code>.`;
     el.warningBanner.style.display = 'block';
     return false;
   }
@@ -105,7 +89,7 @@ async function checkStatus() {
 // -------------------------------------------------------------
 async function loadInventory() {
   try {
-    const res = await fetch(getApiUrl('list'));
+    const res = await fetch('/api/products');
     const data = await res.json();
 
     if (!data.success) {
@@ -123,7 +107,7 @@ async function loadInventory() {
     // 2. Render Table
     renderTable(products);
   } catch (err) {
-    el.tableBody.innerHTML = `<tr><td colspan="6" class="loading-cell">Could not load products. Please check MySQL in XAMPP.</td></tr>`;
+    el.tableBody.innerHTML = `<tr><td colspan="6" class="loading-cell">Cannot reach backend. Make sure <code>npm start</code> is running on port 3000.</td></tr>`;
   }
 }
 
@@ -175,8 +159,8 @@ function renderTable(list) {
 // -------------------------------------------------------------
 window.changeQuantity = async function (id, change) {
   try {
-    const res = await fetch(getApiUrl('quantity', id), {
-      method: isPhpMode ? 'POST' : 'PATCH',
+    const res = await fetch(`/api/products/${id}/quantity`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ change }),
     });
@@ -231,7 +215,7 @@ el.productForm.addEventListener('submit', async (e) => {
   };
 
   try {
-    const url = isEdit ? getApiUrl('edit', id) : getApiUrl('add');
+    const url = isEdit ? `/api/products/${id}` : '/api/products';
     const method = isEdit ? 'PUT' : 'POST';
 
     const res = await fetch(url, {
@@ -267,7 +251,7 @@ el.btnConfirmDelete.addEventListener('click', async () => {
   if (!deleteId) return;
 
   try {
-    const res = await fetch(getApiUrl('delete', deleteId), { method: 'DELETE' });
+    const res = await fetch(`/api/products/${deleteId}`, { method: 'DELETE' });
     const data = await res.json();
 
     if (!data.success) {
