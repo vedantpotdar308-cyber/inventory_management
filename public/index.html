@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Management System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">📦</div>
+        <div class="brand-text">
+          <h2>StockMaster</h2>
+          <span>Inventory Manager</span>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="dashboard-tab">
+          <span class="icon">📊</span> Dashboard
+        </button>
+        <button class="nav-item" data-tab="inventory-tab">
+          <span class="icon">🏷️</span> Products Inventory
+        </button>
+        <button class="nav-item" data-tab="transactions-tab">
+          <span class="icon">🔄</span> Stock History
+        </button>
+      </nav>
+
+      <div class="db-status-card" id="dbStatusWidget">
+        <div class="status-indicator" id="statusIndicator"></div>
+        <div class="status-info">
+          <span class="status-title">Database Status</span>
+          <span class="status-sub" id="statusText">Checking...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="page-title">
+          <h1 id="currentSectionTitle">Dashboard Overview</h1>
+          <p id="currentSectionSubtitle">Real-time stock valuation and inventory metrics</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary" id="btnQuickStock">
+            <span class="icon">⚡</span> Quick Stock In / Out
+          </button>
+          <button class="btn btn-primary" id="btnOpenAddProduct">
+            <span class="icon">➕</span> Add New Product
+          </button>
+        </div>
+      </header>
+
+      <!-- Connection Alert Banner (Shown if MySQL is offline) -->
+      <div class="db-alert-banner" id="dbAlertBanner" style="display: none;">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-text">
+          <strong>Cannot connect to MySQL database!</strong>
+          <p>Please ensure Apache & MySQL are running in <em>XAMPP Control Panel</em> (Port 3306). Default database is <code>inventory_db</code>.</p>
+        </div>
+        <button class="btn btn-sm btn-outline" id="btnRetryDb">Retry Connection</button>
+      </div>
+
+      <!-- Tab: Dashboard -->
+      <section id="dashboard-tab" class="tab-pane active">
+        <!-- Stat Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon bg-blue">📦</div>
+            <div class="stat-details">
+              <span class="stat-label">Total Products</span>
+              <h3 class="stat-value" id="statTotalProducts">0</h3>
+              <span class="stat-hint">Active items in catalog</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon bg-indigo">🔢</div>
+            <div class="stat-details">
+              <span class="stat-label">Total Quantity in Stock</span>
+              <h3 class="stat-value" id="statTotalQty">0</h3>
+              <span class="stat-hint">Units across warehouse</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon bg-emerald">💰</div>
+            <div class="stat-details">
+              <span class="stat-label">Total Stock Value</span>
+              <h3 class="stat-value" id="statTotalValuation">₹0.00</h3>
+              <span class="stat-hint">Total asset valuation</span>
+            </div>
+          </div>
+
+          <div class="stat-card alert-card">
+            <div class="stat-icon bg-amber">⚠️</div>
+            <div class="stat-details">
+              <span class="stat-label">Low Stock Alert</span>
+              <h3 class="stat-value text-amber" id="statLowStock">0</h3>
+              <span class="stat-hint">Below minimum threshold</span>
+            </div>
+          </div>
+
+          <div class="stat-card alert-card">
+            <div class="stat-icon bg-rose">⛔</div>
+            <div class="stat-details">
+              <span class="stat-label">Out of Stock</span>
+              <h3 class="stat-value text-rose" id="statOutOfStock">0</h3>
+              <span class="stat-hint">Requires immediate reorder</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Split Grid -->
+        <div class="dashboard-split">
+          <!-- Low Stock Warning Table -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2>⚠️ Low Stock Attention Items</h2>
+                <span class="subtext">Items that are running out or completely depleted</span>
+              </div>
+              <button class="btn btn-sm btn-outline" id="btnViewAllLowStock">View In Inventory</button>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Stock</th>
+                    <th>Min Alert</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="lowStockTableBody">
+                  <tr><td colspan="6" class="text-center text-muted py-4">Loading low stock items...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Recent Stock Transactions -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2>🔄 Recent Stock Movements</h2>
+                <span class="subtext">Latest arrivals and dispatches</span>
+              </div>
+              <button class="btn btn-sm btn-outline" id="btnViewAllHistory">All Transactions</button>
+            </div>
+            <div class="activity-feed" id="recentActivityFeed">
+              <p class="text-center text-muted py-4">Loading recent movements...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab: Products Inventory -->
+      <section id="inventory-tab" class="tab-pane">
+        <div class="card">
+          <!-- Filter and Control Bar -->
+          <div class="filter-bar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="searchInput" placeholder="Search by SKU, product name, or description..." autocomplete="off">
+              <button class="clear-btn" id="btnClearSearch" title="Clear search">✕</button>
+            </div>
+
+            <div class="filter-controls">
+              <select id="categoryFilter" class="select-input">
+                <option value="ALL">All Categories</option>
+              </select>
+
+              <select id="statusFilter" class="select-input">
+                <option value="all">All Stock Status</option>
+                <option value="in">Normal Stock</option>
+                <option value="low">Low Stock (≤ Min)</option>
+                <option value="out">Out of Stock (0)</option>
+              </select>
+
+              <button class="btn btn-outline" id="btnExportProducts" title="Download products list as CSV">
+                <span class="icon">📥</span> Export CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Product Table -->
+          <div class="table-responsive">
+            <table class="data-table" id="productsTable">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Product Details</th>
+                  <th>Category</th>
+                  <th>Unit Price</th>
+                  <th>Stock Quantity</th>
+                  <th>Status</th>
+                  <th>Total Value</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody">
+                <tr><td colspan="8" class="text-center text-muted py-4">Loading products...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Table Footer Count -->
+          <div class="table-footer">
+            <span id="productCountLabel">Showing 0 products</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab: Stock Movement History -->
+      <section id="transactions-tab" class="tab-pane">
+        <div class="card">
+          <div class="filter-bar">
+            <div class="filter-controls">
+              <label for="txTypeFilter" class="filter-label">Movement Type:</label>
+              <select id="txTypeFilter" class="select-input">
+                <option value="ALL">All Movements (IN & OUT)</option>
+                <option value="IN">Stock IN (Restock / Arrival)</option>
+                <option value="OUT">Stock OUT (Sale / Dispatch)</option>
+              </select>
+
+              <button class="btn btn-outline" id="btnExportTransactions" title="Download transaction log as CSV">
+                <span class="icon">📥</span> Export CSV Log
+              </button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date & Time</th>
+                  <th>SKU</th>
+                  <th>Product Name</th>
+                  <th>Movement Type</th>
+                  <th>Units Changed</th>
+                  <th>Stock Before → After</th>
+                  <th>Notes / Reason</th>
+                </tr>
+              </thead>
+              <tbody id="transactionsTableBody">
+                <tr><td colspan="7" class="text-center text-muted py-4">Loading transaction history...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: Add / Edit Product (Native <dialog closedby="any">) -->
+  <!-- ======================================================== -->
+  <dialog id="productDialog" class="app-dialog" closedby="any" aria-labelledby="productDialogTitle">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2 id="productDialogTitle">Add New Product</h2>
+        <button type="button" class="close-dialog-btn" data-close="productDialog">✕</button>
+      </div>
+
+      <form id="productForm" class="dialog-form">
+        <input type="hidden" id="productId" name="id">
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="productSku">SKU / Item Code <span class="required">*</span></label>
+            <input type="text" id="productSku" name="sku" placeholder="e.g. SKU-2001" required>
+            <span class="field-hint">Unique product identifier</span>
+          </div>
+          <div class="form-group flex-2">
+            <label for="productName">Product Name <span class="required">*</span></label>
+            <input type="text" id="productName" name="name" placeholder="e.g. Wireless Ergonomic Mouse" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="productCategory">Category <span class="required">*</span></label>
+            <input type="text" id="productCategory" name="category" placeholder="e.g. Electronics" list="categoryDatalist" required>
+            <datalist id="categoryDatalist"></datalist>
+          </div>
+          <div class="form-group flex-1">
+            <label for="productPrice">Unit Price (₹) <span class="required">*</span></label>
+            <input type="number" id="productPrice" name="price" step="0.01" min="0" placeholder="0.00" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1" id="initialQtyGroup">
+            <label for="productQuantity">Initial Stock Quantity</label>
+            <input type="number" id="productQuantity" name="quantity" min="0" value="0" placeholder="0">
+            <span class="field-hint">Opening inventory units</span>
+          </div>
+          <div class="form-group flex-1">
+            <label for="productMinStock">Low Stock Threshold <span class="required">*</span></label>
+            <input type="number" id="productMinStock" name="min_stock" min="1" value="5" required>
+            <span class="field-hint">Triggers warning when stock drops below this</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="productDescription">Description / Notes</label>
+          <textarea id="productDescription" name="description" rows="2" placeholder="Optional details, supplier specs, location shelf..."></textarea>
+        </div>
+
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-outline" data-close="productDialog">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSaveProduct">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: Stock In / Stock Out (Native <dialog closedby="any">) -->
+  <!-- ======================================================== -->
+  <dialog id="stockDialog" class="app-dialog" closedby="any" aria-labelledby="stockDialogTitle">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2 id="stockDialogTitle">Stock In / Stock Out</h2>
+        <button type="button" class="close-dialog-btn" data-close="stockDialog">✕</button>
+      </div>
+
+      <form id="stockForm" class="dialog-form">
+        <div class="form-group">
+          <label for="stockProductId">Select Product <span class="required">*</span></label>
+          <select id="stockProductId" name="product_id" required class="select-input">
+            <option value="">-- Choose a product --</option>
+          </select>
+          <div id="stockProductPreview" class="stock-preview-box" style="display: none;">
+            <span>Current Available Stock: <strong id="previewCurrentStock">0</strong> units</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Transaction Type <span class="required">*</span></label>
+          <div class="radio-pill-group">
+            <label class="radio-pill in-pill">
+              <input type="radio" name="stockType" value="IN" checked>
+              <span>📥 Stock IN (Restock / Arrival)</span>
+            </label>
+            <label class="radio-pill out-pill">
+              <input type="radio" name="stockType" value="OUT">
+              <span>📤 Stock OUT (Sale / Dispatch)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="stockQuantity">Number of Units <span class="required">*</span></label>
+          <input type="number" id="stockQuantity" name="quantity" min="1" placeholder="Enter quantity" required>
+        </div>
+
+        <div class="form-group">
+          <label for="stockNotes">Reason / Reference Notes</label>
+          <input type="text" id="stockNotes" name="notes" placeholder="e.g. PO #1084, Customer Order #52, Damaged write-off">
+        </div>
+
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-outline" data-close="stockDialog">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitStock">Submit Transaction</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: Delete Product Confirmation -->
+  <!-- ======================================================== -->
+  <dialog id="deleteDialog" class="app-dialog" closedby="any" aria-labelledby="deleteDialogTitle">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h2 id="deleteDialogTitle">Confirm Deletion</h2>
+        <button type="button" class="close-dialog-btn" data-close="deleteDialog">✕</button>
+      </div>
+      <div class="dialog-body">
+        <p>Are you sure you want to delete <strong id="deleteProductName">this product</strong>?</p>
+        <p class="text-danger-notice">⚠️ This will also remove all stock movement history for this item. This action cannot be undone.</p>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-outline" data-close="deleteDialog">Cancel</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmDelete">Delete Product</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- Scripts -->
+  <script src="js/app.js"></script>
+</body>
+</html>
