@@ -1,61 +1,82 @@
-# 📦 Simple Inventory Management System
+# 📦 StockMaster - Inventory & Sales Management System
 
-A simple inventory management project with:
-- **Frontend**: Plain HTML, CSS, and JavaScript.
-- **Backend**: MySQL database with Node.js (Express) server.
+A full-stack, comprehensive Inventory & Sales Management System built with a **Node.js (Express)** backend, **MySQL** database, and a clean **HTML5, CSS3, and Vanilla JavaScript** frontend.
 
 ---
 
-## 🌟 What This Project Does
+## 🌟 Complete Feature Breakdown
 
-1. **Dashboard Details**:
-   - **Total Products**: How many different products are in stock.
-   - **Total Stock Quantity**: Sum of all units across all products.
-   - **Total Stock Value**: Total valuation (`Price × Quantity` for all products).
+### 1. 🔐 Login & Authentication System
+* User sign-in with password hashing.
+* Pre-seeded administrator account:
+  * **Username**: `admin`
+  * **Password**: `admin123`
+* Persistent session tracking and secure sign-out.
 
-2. **Core Features**:
-   - **Adding Products**: Add a product with Name, Category, Unit Price, and Quantity.
-   - **Editing Products**: Update any product's details and stock.
-   - **Removing Products**: Delete a product with confirmation.
-   - **Changing Quantity**: Quick `+` and `−` buttons directly in each row to change stock on the fly.
-   - **Quick Search**: Filter products by name or category instantly.
+### 2. 🏷️ Product Management
+* Complete product lifecycle: **Add new product**, **View all products**, **Edit product**, **Delete product**.
+* Real-time search across Product ID, Product Name, Category, and Description.
+* Filter by Category and Stock Status (*All*, *Low Stock*, *Out of Stock*).
+* **Comprehensive Product Fields**:
+  * `Product ID / Code` (e.g., `PRD-1001`)
+  * `Product Name`
+  * `Category`
+  * `Description`
+  * `Purchase Price (₹)` (Cost per unit)
+  * `Sales Price (₹)` (Selling price)
+  * `Available Quantity` (Units in warehouse)
+  * `Minimum Stock Level` (Threshold for low stock warnings)
+
+### 3. 🛒 Sales Management
+* **Create a New Sale**:
+  * Interactive Product Selector displaying real-time available stock and unit price.
+  * Enter quantity sold with instant validation (prevents selling more than on-hand stock).
+  * **Automatic Total Calculation**: Calculates `Quantity × Sales Price` live on screen.
+  * Customer Name, Payment Method (*Cash*, *UPI / QR*, *Card*, *Net Banking*), and optional notes.
+* **Automatic Stock Reduction**: Reduces warehouse inventory atomically inside a MySQL transaction.
+* **Invoice Generation**: Generates official formatted receipts (`INV-YYYYMMDD-XXXX`) with a dedicated **Print Receipt** dialog.
+* Sales history table logging all completed transactions.
+
+### 4. 📑 Comprehensive Reports & Analytics
+* **Date-Wise Filtering**: Filter any report from `Start Date` to `End Date`.
+* **Print Report Button**: One-click professional print formatting (`@media print` stylesheet) that cleans UI toolbars and prints a clean report page.
+* **6 Dedicated Reports**:
+  1. **Product Report**: Complete catalog summary with margins and cost vs. sales price.
+  2. **Available Stock Report**: Total units stocked, total cost valuation, total retail valuation, and potential gross profit.
+  3. **Low Stock Report**: Immediate reorder items with deficit units and estimated reorder cost.
+  4. **Daily Sales Report**: Day-by-day revenue, cost, profit, and order counts.
+  5. **Monthly Sales Report**: Month-by-month financial performance breakdown.
+  6. **Purchase & Stock Movement Report**: Complete audit trail of initial stock, sales deductions, and adjustments.
 
 ---
 
-## 🚀 How to Run
+## 🚀 Quick Start Guide
 
-### Step 1: Start MySQL in XAMPP
-1. Open the **XAMPP Control Panel**.
-2. Click **Start** next to **MySQL** (port 3306).
+### Step 1: Ensure MySQL is Running
+Make sure your MySQL server is running (port **3306**).
 
-> The project automatically creates the `inventory_db` database and `products` table on start, and inserts starter products if empty!
+### Step 2: Configure Environment (Already Done)
+Settings are located in **[.env](file:///d:/download/inventory-management-system/.env)**:
+```ini
+PORT=3000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=ved@2006potd
+DB_NAME=inventory_db
+```
 
-### Step 2: Start the Project
-Open terminal / command prompt in this directory:
+### Step 3: Run the Application
+In your terminal, navigate to the folder and run:
 ```bash
 cd d:\download\inventory-management-system
 npm start
 ```
 
-### Step 3: Open in Browser
-Visit: **[http://localhost:3000](http://localhost:3000)**
+### Step 4: Access in Your Browser
+Open your browser and visit:
+👉 **[http://localhost:3000](http://localhost:3000)**
 
----
-
-## 📁 File Structure
-
-```text
-inventory-management-system/
-├── server.js             # Simple backend server (connects to MySQL & serves frontend)
-├── database/
-│   ├── db.js             # MySQL connection & table initialization
-│   └── schema.sql        # MySQL database schema & sample data
-├── public/               # Frontend
-│   ├── index.html        # Clean HTML (Dashboard + Products Table + Modals)
-│   ├── css/
-│   │   └── style.css     # Simple, clean, minimal styling
-│   └── js/
-│       └── app.js        # JavaScript (fetch API, CRUD, quantity change)
-├── .env                  # MySQL configuration (default XAMPP root, no password)
-└── package.json          # Dependencies (express, mysql2, dotenv, cors)
-```
+* **Default Login**:
+  * Username: `admin`
+  * Password: `admin123`
