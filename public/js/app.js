@@ -1,6 +1,7 @@
 /**
  * Simple Inventory Management - Frontend Controller
  * Plain HTML, CSS, JavaScript (ES6+)
+ * Compatible with Node.js backend AND PHP/XAMPP backend
  */
 
 let products = [];
@@ -39,6 +40,23 @@ const el = {
   toast: document.getElementById('toastMessage'),
 };
 
+// Auto-detect backend (Node.js or PHP in XAMPP)
+const isPhpMode = window.location.port !== '3000' || window.location.pathname.includes('/inventory');
+
+function getApiUrl(action, id = null) {
+  if (isPhpMode) {
+    if (action === 'status') return 'api.php?action=status';
+    if (action === 'quantity') return `api.php?action=quantity&id=${id}`;
+    if (action === 'edit' || action === 'delete') return `api.php?id=${id}`;
+    return 'api.php';
+  } else {
+    if (action === 'status') return '/api/status';
+    if (action === 'quantity') return `/api/products/${id}/quantity`;
+    if (action === 'edit' || action === 'delete') return `/api/products/${id}`;
+    return '/api/products';
+  }
+}
+
 // Format currency in Indian Rupees (₹)
 function formatCurrency(amount) {
   return new Intl.NumberFormat('en-IN', {
@@ -50,6 +68,7 @@ function formatCurrency(amount) {
 
 // Show simple toast alert
 function showToast(text) {
+  if (!el.toast) return;
   el.toast.textContent = text;
   el.toast.classList.add('show');
   setTimeout(() => el.toast.classList.remove('show'), 3000);
@@ -60,7 +79,7 @@ function showToast(text) {
 // -------------------------------------------------------------
 async function checkStatus() {
   try {
-    const res = await fetch('/api/status');
+    const res = await fetch(getApiUrl('status'));
     const data = await res.json();
     if (data.online) {
       el.statusDot.className = 'status-dot online';
@@ -86,7 +105,7 @@ async function checkStatus() {
 // -------------------------------------------------------------
 async function loadInventory() {
   try {
-    const res = await fetch('/api/products');
+    const res = await fetch(getApiUrl('list'));
     const data = await res.json();
 
     if (!data.success) {
@@ -98,7 +117,7 @@ async function loadInventory() {
 
     // 1. Update Dashboard
     el.dashTotalProducts.textContent = data.stats.totalProducts;
-    el.dashTotalQty.textContent = data.stats.totalQuantity.toLocaleString();
+    el.dashTotalQty.textContent = Number(data.stats.totalQuantity).toLocaleString();
     el.dashTotalValue.textContent = formatCurrency(data.stats.totalValue);
 
     // 2. Render Table
@@ -156,8 +175,8 @@ function renderTable(list) {
 // -------------------------------------------------------------
 window.changeQuantity = async function (id, change) {
   try {
-    const res = await fetch(`/api/products/${id}/quantity`, {
-      method: 'PATCH',
+    const res = await fetch(getApiUrl('quantity', id), {
+      method: isPhpMode ? 'POST' : 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ change }),
     });
@@ -212,7 +231,7 @@ el.productForm.addEventListener('submit', async (e) => {
   };
 
   try {
-    const url = isEdit ? `/api/products/${id}` : '/api/products';
+    const url = isEdit ? getApiUrl('edit', id) : getApiUrl('add');
     const method = isEdit ? 'PUT' : 'POST';
 
     const res = await fetch(url, {
@@ -248,7 +267,7 @@ el.btnConfirmDelete.addEventListener('click', async () => {
   if (!deleteId) return;
 
   try {
-    const res = await fetch(`/api/products/${deleteId}`, { method: 'DELETE' });
+    const res = await fetch(getApiUrl('delete', deleteId), { method: 'DELETE' });
     const data = await res.json();
 
     if (!data.success) {
